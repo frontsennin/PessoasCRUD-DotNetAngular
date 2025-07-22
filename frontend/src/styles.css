@@ -1,4 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+
 * {
   margin: 0;
   padding: 0;
@@ -33,4 +34,212 @@ html, body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #5a6fd8;
+}
+
+/* Toastr - Estilos base */
+.toast-container {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.toast-container * {
+  box-sizing: border-box;
+}
+
+.toast-container .ngx-toastr {
+  position: relative;
+  overflow: hidden;
+  margin: 0 0 6px;
+  padding: 15px 15px 15px 50px;
+  width: 300px;
+  border-radius: 8px;
+  color: #fff;
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: slideIn 0.3s ease;
+}
+
+.toast-container .ngx-toastr:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  cursor: pointer;
+}
+
+/* Posições do Toastr */
+.toast-top-right {
+  top: 12px;
+  right: 12px;
+}
+
+.toast-top-center {
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toast-top-left {
+  top: 12px;
+  left: 12px;
+}
+
+.toast-bottom-right {
+  bottom: 12px;
+  right: 12px;
+}
+
+.toast-bottom-center {
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.toast-bottom-left {
+  bottom: 12px;
+  left: 12px;
+}
+
+/* Tipos de Toastr com gradientes cyberpunk */
+.toast-container .ngx-toastr.toast-success {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+}
+
+.toast-container .ngx-toastr.toast-error {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  border: none;
+}
+
+.toast-container .ngx-toastr.toast-warning {
+  background: linear-gradient(135deg, #ffd93d 0%, #ff6b6b 100%);
+  border: none;
+}
+
+.toast-container .ngx-toastr.toast-info {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  border: none;
+}
+
+/* Barra de progresso */
+.toast-container .ngx-toastr.toast-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.7);
+  animation: progress 3s linear;
+}
+
+/* Botão de fechar */
+.toast-container .ngx-toastr .toast-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-container .ngx-toastr .toast-close-button:hover {
+  opacity: 1;
+}
+
+/* Título e mensagem */
+.toast-container .ngx-toastr .toast-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+
+.toast-container .ngx-toastr .toast-message {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Animações */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInTop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .toast-container .ngx-toastr {
+    width: 280px;
+    margin: 0 0 4px;
+    padding: 12px 12px 12px 40px;
+  }
+  
+  .toast-top-right,
+  .toast-bottom-right {
+    right: 8px;
+  }
+  
+  .toast-top-left,
+  .toast-bottom-left {
+    left: 8px;
+  }
 } 
+
+

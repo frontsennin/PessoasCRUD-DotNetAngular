@@ -1,13 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 import { PessoaService } from '../services/pessoa.service';
 import { Pessoa } from '../models/pessoa';
+import { ConfirmModalComponent } from '../components/confirm-modal/confirm-modal.component';
+import { FilterSortComponent, FilterSortOptions } from '../components/filter-sort/filter-sort.component';
 
 @Component({
   selector: 'app-pessoas',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent, FilterSortComponent],
   template: `
     <div class="pessoas-container">
       <!-- Formulário -->
@@ -63,8 +66,15 @@ import { Pessoa } from '../models/pessoa';
       <!-- Lista de Pessoas -->
       <div class="list-section">
         <h2>Lista de Pessoas</h2>
+        
+        <!-- Filtros e Ordenação -->
+        <app-filter-sort 
+          [options]="filterOptions"
+          (optionsChange)="onFilterOptionsChange($event)"
+        ></app-filter-sort>
+        
         <div class="pessoas-list">
-          <div *ngFor="let p of pessoas" class="pessoa-card">
+          <div *ngFor="let p of pessoasFiltradas" class="pessoa-card">
             <div class="pessoa-info">
               <h3>{{ p.nome }}</h3>
               <p><strong>Endereço:</strong> {{ p.endereco }}</p>
@@ -74,19 +84,31 @@ import { Pessoa } from '../models/pessoa';
               <button class="btn btn-edit" (click)="editar(p)">
                 ✏️ Editar
               </button>
-              <button class="btn btn-delete" (click)="excluir(p.id!)">
+              <button class="btn btn-delete" (click)="confirmarExclusao(p)">
                 🗑️ Excluir
               </button>
             </div>
           </div>
         </div>
         
-        <div *ngIf="pessoas.length === 0" class="empty-state">
-          <p>Nenhuma pessoa cadastrada ainda.</p>
+        <div *ngIf="pessoasFiltradas.length === 0" class="empty-state">
+          <p *ngIf="pessoas.length === 0">Nenhuma pessoa cadastrada ainda.</p>
+          <p *ngIf="pessoas.length > 0">Nenhuma pessoa encontrada com os filtros aplicados.</p>
           <p>Adicione uma nova pessoa usando o formulário acima!</p>
         </div>
       </div>
     </div>
+
+    <!-- Modal de Confirmação -->
+    <app-confirm-modal
+      [isOpen]="showDeleteModal"
+      title="Confirmar Exclusão"
+      message="Tem certeza que deseja excluir {{ pessoaParaExcluir?.nome }}? Esta ação não pode ser desfeita."
+      confirmText="Excluir"
+      cancelText="Cancelar"
+      (confirm)="excluirConfirmado()"
+      (cancel)="cancelarExclusao()"
+    ></app-confirm-modal>
   `,
   styles: [`
     .pessoas-container {
@@ -269,6 +291,7 @@ import { Pessoa } from '../models/pessoa';
 })
 export class PessoasComponent implements OnInit {
   pessoas: Pessoa[] = [];
+  pessoasFiltradas: Pessoa[] = [];
   pessoa: Pessoa = {
     nome: '',
     endereco: '',
@@ -276,8 +299,22 @@ export class PessoasComponent implements OnInit {
   };
   editando = false;
   pessoaEditandoId?: number;
+  
+  // Filtros e ordenação
+  filterOptions: FilterSortOptions = {
+    searchTerm: '',
+    sortBy: 'nome',
+    sortOrder: 'asc'
+  };
+  
+  // Modal de confirmação
+  showDeleteModal = false;
+  pessoaParaExcluir?: Pessoa;
 
-  constructor(private pessoaService: PessoaService) {}
+  constructor(
+    private pessoaService: PessoaService,
+    private toastr: ToastrService
+  ) {}
 
   ngOnInit(): void {
     this.carregarPessoas();
@@ -287,12 +324,63 @@ export class PessoasComponent implements OnInit {
     this.pessoaService.getPessoas().subscribe({
       next: (pessoas) => {
         this.pessoas = pessoas;
+        this.aplicarFiltros();
       },
       error: (error) => {
         console.error('Erro ao carregar pessoas:', error);
-        alert('Erro ao carregar a lista de pessoas. Verifique se o backend está rodando.');
+        this.toastr.error('Erro ao carregar a lista de pessoas. Verifique se o backend está rodando.', 'Erro');
       }
     });
+  }
+
+  aplicarFiltros(): void {
+    let pessoasFiltradas = [...this.pessoas];
+
+    // Aplicar filtro de busca
+    if (this.filterOptions.searchTerm.trim()) {
+      const termo = this.filterOptions.searchTerm.toLowerCase();
+      pessoasFiltradas = pessoasFiltradas.filter(p => 
+        p.nome.toLowerCase().includes(termo) || 
+        p.endereco.toLowerCase().includes(termo)
+      );
+    }
+
+    // Aplicar ordenação
+    pessoasFiltradas.sort((a, b) => {
+      let valorA: any;
+      let valorB: any;
+
+      switch (this.filterOptions.sortBy) {
+        case 'nome':
+          valorA = a.nome.toLowerCase();
+          valorB = b.nome.toLowerCase();
+          break;
+        case 'endereco':
+          valorA = a.endereco.toLowerCase();
+          valorB = b.endereco.toLowerCase();
+          break;
+        case 'dataNascimento':
+          valorA = new Date(a.dataNascimento);
+          valorB = new Date(b.dataNascimento);
+          break;
+        default:
+          valorA = a.nome.toLowerCase();
+          valorB = b.nome.toLowerCase();
+      }
+
+      if (this.filterOptions.sortOrder === 'asc') {
+        return valorA < valorB ? -1 : valorA > valorB ? 1 : 0;
+      } else {
+        return valorA > valorB ? -1 : valorA < valorB ? 1 : 0;
+      }
+    });
+
+    this.pessoasFiltradas = pessoasFiltradas;
+  }
+
+  onFilterOptionsChange(options: FilterSortOptions): void {
+    this.filterOptions = options;
+    this.aplicarFiltros();
   }
 
   onSubmit(): void {
@@ -301,11 +389,11 @@ export class PessoasComponent implements OnInit {
         next: () => {
           this.carregarPessoas();
           this.limparFormulario();
-          alert('Pessoa atualizada com sucesso!');
+          this.toastr.success('Pessoa atualizada com sucesso!', 'Sucesso');
         },
         error: (error) => {
           console.error('Erro ao atualizar pessoa:', error);
-          alert('Erro ao atualizar pessoa.');
+          this.toastr.error('Erro ao atualizar pessoa.', 'Erro');
         }
       });
     } else {
@@ -313,11 +401,11 @@ export class PessoasComponent implements OnInit {
         next: () => {
           this.carregarPessoas();
           this.limparFormulario();
-          alert('Pessoa adicionada com sucesso!');
+          this.toastr.success('Pessoa adicionada com sucesso!', 'Sucesso');
         },
         error: (error) => {
           console.error('Erro ao criar pessoa:', error);
-          alert('Erro ao criar pessoa.');
+          this.toastr.error('Erro ao criar pessoa.', 'Erro');
         }
       });
     }
@@ -329,19 +417,31 @@ export class PessoasComponent implements OnInit {
     this.pessoaEditandoId = pessoa.id;
   }
 
-  excluir(id: number): void {
-    if (confirm('Tem certeza que deseja excluir esta pessoa?')) {
-      this.pessoaService.deletePessoa(id).subscribe({
+  confirmarExclusao(pessoa: Pessoa): void {
+    this.pessoaParaExcluir = pessoa;
+    this.showDeleteModal = true;
+  }
+
+  excluirConfirmado(): void {
+    if (this.pessoaParaExcluir) {
+      this.pessoaService.deletePessoa(this.pessoaParaExcluir.id!).subscribe({
         next: () => {
           this.carregarPessoas();
-          alert('Pessoa excluída com sucesso!');
+          this.toastr.success('Pessoa excluída com sucesso!', 'Sucesso');
+          this.cancelarExclusao();
         },
         error: (error) => {
           console.error('Erro ao excluir pessoa:', error);
-          alert('Erro ao excluir pessoa.');
+          this.toastr.error('Erro ao excluir pessoa.', 'Erro');
+          this.cancelarExclusao();
         }
       });
     }
+  }
+
+  cancelarExclusao(): void {
+    this.showDeleteModal = false;
+    this.pessoaParaExcluir = undefined;
   }
 
   cancelar(): void {
